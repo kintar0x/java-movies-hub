@@ -1,5 +1,4 @@
 package ru.practicum.moviehub.api;
 
-public class ErrorResponse {
-
+public record ErrorResponse(String error) {
 }
