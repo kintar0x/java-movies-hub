@@ -3,37 +3,37 @@ package ru.practicum.moviehub.store;
 import ru.practicum.moviehub.model.Movie;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class MoviesStore {
-    private final List<Movie> movies = new ArrayList<>();
+    private final Map<Integer, Movie> movies = new HashMap<>();
     private int nextId = 1;
 
     public List<Movie> getAll() {
-        return new ArrayList<>(movies);
+        return new ArrayList<>(movies.values());
     }
 
     public List<Movie> getByYear(int year) {
-        return movies.stream()
+        return movies.values().stream()
                 .filter(movie -> movie.getYear() == year)
                 .toList();
     }
 
     public Movie add(Movie movie) {
         movie.setId(nextId++);
-        movies.add(movie);
+        movies.put(movie.getId(), movie);
         return movie;
     }
 
     public Optional<Movie> getById(int id) {
-        return movies.stream()
-                .filter(movie -> movie.getId() == id)
-                .findFirst();
+        return Optional.ofNullable(movies.get(id));
     }
 
     public void delete(int id) {
-        movies.removeIf(movie -> movie.getId() == id);
+        movies.remove(id);
     }
 
     public void clear() {

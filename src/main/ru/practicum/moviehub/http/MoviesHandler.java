@@ -156,14 +156,19 @@ public class MoviesHandler extends BaseHttpHandler {
     private List<String> validate(Movie movie) {
         List<String> details = new ArrayList<>();
 
-        if (movie == null || movie.getTitle() == null || movie.getTitle().isBlank()) {
+        if (movie == null) {
+            details.add("тело запроса не может быть пустым");
+            return details;
+        }
+
+        if (movie.getTitle() == null || movie.getTitle().isBlank()) {
             details.add("название не должно быть пустым");
         } else if (movie.getTitle().length() > MAX_TITLE_LENGTH) {
             details.add("название не должно превышать " + MAX_TITLE_LENGTH + " символов");
         }
 
         int currentYear = Year.now().getValue() + 1;
-        if (movie == null || movie.getYear() < EARLIEST_YEAR || movie.getYear() > currentYear) {
+        if (movie.getYear() < EARLIEST_YEAR || movie.getYear() > currentYear) {
             details.add("год должен быть между " + EARLIEST_YEAR + " и " + currentYear);
         }
 

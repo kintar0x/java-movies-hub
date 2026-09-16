@@ -48,40 +48,15 @@ public class MoviesApiTest {
     }
 
     @Test
-    void postMovie_addsMovie() throws Exception {
-        Movie movie = new Movie("Интерстеллар", 2014);
-        HttpResponse<String> response = post(gson.toJson(movie));
+    void getMovies_returnsAddedMovies() throws Exception {
+        server.getStore().add(new Movie("Матрица", 1999));
+        server.getStore().add(new Movie("Начало", 2010));
 
-        assertEquals(201, response.statusCode());
+        HttpResponse<String> response = get("/movies");
+        assertEquals(200, response.statusCode());
 
-        Movie created = gson.fromJson(response.body(), Movie.class);
-        assertNotNull(created);
-        assertEquals("Интерстеллар", created.getTitle());
-        assertEquals(2014, created.getYear());
-        assertEquals(1, created.getId());
-    }
-
-    @Test
-    void postMovie_invalidTitleAndYear_returns422() throws Exception {
-        Movie movie = new Movie("", 1800);
-        HttpResponse<String> response = post(gson.toJson(movie));
-
-        assertEquals(422, response.statusCode());
-        assertTrue(response.body().contains("Ошибка валидации"));
-        assertTrue(response.body().contains("название не должно быть пустым"));
-        assertTrue(response.body().contains("год должен быть между"));
-    }
-
-    @Test
-    void postMovie_wrongContentType_returns415() throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE + "/movies"))
-                .header("Content-Type", "text/plain")
-                .POST(HttpRequest.BodyPublishers.ofString("{}"))
-                .build();
-
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        assertEquals(415, response.statusCode());
+        List<Movie> movies = gson.fromJson(response.body(), new ListOfMoviesTypeToken().getType());
+        assertEquals(2, movies.size());
     }
 
     @Test
@@ -106,6 +81,48 @@ public class MoviesApiTest {
     void getUnknownMovie_returns404() throws Exception {
         HttpResponse<String> response = get("/movies/999");
         assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    void postMovie_addsMovie() throws Exception {
+        Movie movie = new Movie("Интерстеллар", 2014);
+        HttpResponse<String> response = post(gson.toJson(movie));
+
+        assertEquals(201, response.statusCode());
+
+        Movie created = gson.fromJson(response.body(), Movie.class);
+        assertNotNull(created);
+        assertEquals("Интерстеллар", created.getTitle());
+        assertEquals(1, created.getId());
+    }
+
+    @Test
+    void postMovie_invalidTitleAndYear_returns422() throws Exception {
+        Movie movie = new Movie("", 1800);
+        HttpResponse<String> response = post(gson.toJson(movie));
+
+        assertEquals(422, response.statusCode());
+        assertTrue(response.body().contains("Ошибка валидации"));
+        assertTrue(response.body().contains("название не должно быть пустым"));
+        assertTrue(response.body().contains("год должен быть между"));
+    }
+
+    @Test
+    void postMovie_invalidJson_returns400() throws Exception {
+        HttpResponse<String> response = post("{ это не json }");
+        assertEquals(400, response.statusCode());
+    }
+
+    @Test
+    void postMovie_wrongContentType_returns415() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE + "/movies"))
+                .header("Content-Type", "text/plain")
+                .POST(HttpRequest.BodyPublishers.ofString("{}"))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        assertEquals(415, response.statusCode());
     }
 
     @Test
@@ -138,9 +155,26 @@ public class MoviesApiTest {
     }
 
     @Test
+    void deleteMovie_wrongId_returns400() throws Exception {
+        HttpResponse<String> response = delete("/movies/abc");
+        assertEquals(400, response.statusCode());
+    }
+
+    @Test
     void deleteUnknownMovie_returns404() throws Exception {
         HttpResponse<String> response = delete("/movies/999");
         assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    void wrongMethod_returns405() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE + "/movies"))
+                .PUT(HttpRequest.BodyPublishers.ofString("{}"))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        assertEquals(405, response.statusCode());
     }
 
     private HttpResponse<String> get(String path) throws Exception {
